@@ -18,9 +18,9 @@
 
   <!-- SIH 2026 Presentation Top Bar -->
   <header class="sih-header-bar">
-    <div style="display: flex; align-items: center; gap: 12px;">
+    <div class="sih-brand-title">
       <span class="tag"><i class="fa-solid fa-trophy"></i> SIH 2026</span>
-      <div>
+      <div class="sih-title-text">
         <strong>PS-SIH26076:</strong> Personalized Mausam Homepage · <em>Team Byte Force 02</em>
       </div>
     </div>
@@ -43,10 +43,11 @@
       
       <!-- Phone Hardware Mockup Bar -->
       <div class="phone-status-bar">
-        <span>09:41</span>
-        <div class="phone-island">
+        <span id="statusBarClock">09:41</span>
+        <div class="phone-island" id="dynamicIsland">
           <div class="island-camera"></div>
           <div class="island-sensor"></div>
+          <span class="island-status-pill" id="islandStatusPill"><i class="fa-solid fa-cloud-sun"></i> IMD</span>
         </div>
         <div style="display: flex; align-items: center; gap: 6px;">
           <i class="fa-solid fa-signal" style="font-size: 0.7rem;"></i>
@@ -56,7 +57,7 @@
       </div>
 
       <!-- Scrollable Application Screen -->
-      <div class="app-screen">
+      <div class="app-screen" id="appScreen">
         
         <!-- App Top Bar & Brand -->
         <div class="app-topbar">
@@ -89,13 +90,16 @@
               <span class="panchayat-tag" id="panchayatDisplayName">Gramin Krishi Mausam Sewa</span>
             </div>
           </div>
-          <select id="locationSelect" class="location-dropdown-select">
-            <option value="delhi">New Delhi (Metro / AQI Focus)</option>
-            <option value="mumbai">Mumbai (Coastal / Marine Tide)</option>
-            <option value="ludhiana">Ludhiana (Punjab / GKMS Agro)</option>
-            <option value="bengaluru">Bengaluru (Plateau / Commute)</option>
-            <option value="shimla">Shimla (Hill Station / Cold Wave)</option>
-          </select>
+          <div class="location-select-wrap">
+            <select id="locationSelect" class="location-dropdown-select">
+              <option value="delhi">New Delhi (Metro / AQI)</option>
+              <option value="mumbai">Mumbai (Coastal / Tides)</option>
+              <option value="ludhiana">Ludhiana (Punjab / GKMS)</option>
+              <option value="bengaluru">Bengaluru (Tech / Commute)</option>
+              <option value="shimla">Shimla (Hill Station / Cold)</option>
+            </select>
+            <i class="fa-solid fa-chevron-down loc-arrow"></i>
+          </div>
         </div>
 
         <!-- Context Inference Engine Badge (Slide 2 & 3) -->
@@ -126,7 +130,7 @@
             <div class="hero-score-left">
               <span class="score-title-label" id="heroScoreLabel">RUN SCORE</span>
               <div class="hero-big-score" id="heroScoreVal">
-                82<span class="denom">/100</span>
+                0<span class="denom">/100</span>
               </div>
             </div>
             <div class="hero-score-badge" id="heroScoreBadge">
@@ -176,39 +180,56 @@
 
       <!-- BOTTOM NAVIGATION DOCK -->
       <footer class="bottom-dock">
-        <button class="dock-item active">
+        <button class="dock-item active" id="homeDockBtn">
           <i class="fa-solid fa-house"></i>
           <span>Home</span>
         </button>
-        <button class="dock-item" id="radarDockBtn" onclick="alert('Mausam Doppler Weather Radar & Cloud Satellite Imagery simulation active.')">
+        <button class="dock-item" id="radarDockBtn" title="Live Doppler Radar & Satellite">
           <i class="fa-solid fa-satellite-dish"></i>
           <span>Radar</span>
         </button>
         <button class="voice-mic-main-btn" id="micDockBtn" title="Speak to Mausam Bol (Voice Assistant)">
           <i class="fa-solid fa-microphone"></i>
         </button>
-        <button class="dock-item" id="agrometDockBtn" onclick="mausamApp.activePersona='farmer'; mausamApp.renderPersonaPills(); mausamApp.renderHeroSection(); mausamApp.renderWidgets();">
+        <button class="dock-item" id="agrometDockBtn" title="Gramin Krishi Mausam Sewa">
           <i class="fa-solid fa-seedling"></i>
           <span>GKMS</span>
         </button>
-        <button class="dock-item" onclick="mausamApp.openOnboardingModal()">
+        <button class="dock-item" id="personaSettingsDockBtn" title="Personalize Settings">
           <i class="fa-solid fa-user-gear"></i>
           <span>Persona</span>
         </button>
       </footer>
 
-      <!-- MODAL 1: VOICE ASSISTANT ("मौसम बोल" / Mausam Bol) -->
+      <!-- ==========================================================================
+           MODAL 1: FULL CONVERSATIONAL VOICE ASSISTANT ("मौसम बोल" / Mausam Bol)
+           With Persistent Chat History, Audio Replay & Persona Action Cards
+           ========================================================================== -->
       <div class="modal-overlay" id="voiceModal">
-        <div class="modal-sheet">
+        <div class="modal-sheet chat-modal-sheet">
           <div class="modal-drag-handle"></div>
-          <div class="modal-header-title">
-            <h2><i class="fa-solid fa-microphone-lines" style="color: #2563eb;"></i> Mausam Bol (मौसम बोल)</h2>
-            <button class="modal-close-btn" id="closeVoiceBtn">&times;</button>
+          
+          <div class="chat-sheet-header">
+            <div class="chat-header-info">
+              <div class="chat-avatar-imd">
+                <i class="fa-solid fa-robot"></i>
+              </div>
+              <div>
+                <h2>Mausam AI · मौसम बोल</h2>
+                <span class="chat-status-indicator">
+                  <span class="online-indicator-dot"></span> Live Weather Agent (EN / हिन्दी)
+                </span>
+              </div>
+            </div>
+            <div class="chat-header-actions">
+              <button class="chat-icon-action-btn" id="clearChatBtn" title="Clear Chat History">
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+              <button class="modal-close-btn" id="closeVoiceBtn" title="Close Assistant">&times;</button>
+            </div>
           </div>
-          <p style="font-size: 0.78rem; color: #64748b;">
-            Multilingual Voice & NLP Query engine grounded in real-time Comfort Indices.
-          </p>
 
+          <!-- Live Listening Audio Wave Bar -->
           <div class="voice-wave-container" id="voiceWave">
             <div class="wave-bar"></div>
             <div class="wave-bar"></div>
@@ -216,52 +237,49 @@
             <div class="wave-bar"></div>
             <div class="wave-bar"></div>
             <div class="wave-bar"></div>
+            <span class="wave-status-text">Listening... बोलिए</span>
           </div>
 
-          <div style="text-align: center; margin-bottom: 12px;">
-            <span id="voiceStatusText" style="font-size: 0.8rem; font-weight: 600; color: #1e293b;">
-              Tap mic to speak or select a sample question:
-            </span>
+          <!-- Chat Messages Scroll Stream (Chat History) -->
+          <div class="chat-messages-container" id="chatMessagesContainer">
+            <!-- Messages rendered dynamically with user & assistant bubbles -->
           </div>
 
-          <div class="voice-query-input-box">
-            <input type="text" id="voiceInputText" placeholder="Ask in English or हिंदी (e.g. Can I run today?)...">
-            <button id="voiceListenToggleBtn" class="icon-btn-circle" title="Listen with Mic" style="width: 32px; height: 32px;">
+          <!-- Quick Suggestion Prompts Strip -->
+          <div class="chat-suggestions-strip">
+            <span class="suggest-label">Suggestions:</span>
+            <div class="suggestions-scroll" id="suggestionsScroll">
+              <button class="chat-prompt-pill" data-query="Can I go for a run right now?">🏃 Can I run right now?</button>
+              <button class="chat-prompt-pill" data-query="क्या आज फसल में कीटनाशक छिड़क सकते हैं?">🌾 क्या आज कीटनाशक छिड़कें?</button>
+              <button class="chat-prompt-pill" data-query="Will it rain during evening commute?">🚗 Rain during commute?</button>
+              <button class="chat-prompt-pill" data-query="Is today good for the beach and swimming?">🏖️ Beach & tide condition?</button>
+              <button class="chat-prompt-pill" data-query="What is the air quality and PM2.5?">🩺 AQI & mask advice?</button>
+              <button class="chat-prompt-pill" data-query="आज का मौसम कैसा रहेगा?">🌤️ आज का मौसम कैसा रहेगा?</button>
+            </div>
+          </div>
+
+          <!-- Chat Input Bar -->
+          <div class="chat-input-bar">
+            <button id="voiceListenToggleBtn" class="chat-mic-btn" title="Tap to Speak">
               <i class="fa-solid fa-microphone"></i>
             </button>
-            <button id="voiceSendBtn" class="icon-btn-circle active" title="Send Query" style="width: 32px; height: 32px;">
+            <input type="text" id="voiceInputText" placeholder="Ask in English or हिन्दी (e.g. Can I run today?)..." autocomplete="off">
+            <button id="voiceSendBtn" class="chat-send-btn" title="Send Question">
               <i class="fa-solid fa-paper-plane"></i>
             </button>
-          </div>
-
-          <!-- Spoken Response Card -->
-          <div class="voice-response-card" id="voiceResponseCard" style="display: none;">
-            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px; font-size: 0.75rem; font-weight: 700; color: #2563eb;">
-              <i class="fa-solid fa-volume-high"></i> Mausam Voice Response:
-            </div>
-            <p id="voiceResponseText"></p>
-          </div>
-
-          <div style="font-size: 0.74rem; font-weight: 700; color: #475569; margin-top: 10px;">
-            Quick Prompts:
-          </div>
-          <div class="voice-quick-prompts">
-            <button class="prompt-chip" data-query="Can I go for a run right now?">🏃 Can I run right now?</button>
-            <button class="prompt-chip" data-query="क्या आज फसल में कीटनाशक छिड़क सकते हैं?">🌾 क्या आज कीटनाशक छिड़कें?</button>
-            <button class="prompt-chip" data-query="Will it rain during evening commute?">🚗 Rain during commute?</button>
-            <button class="prompt-chip" data-query="Is today good for the beach and swimming?">🏖️ Beach & tide condition?</button>
-            <button class="prompt-chip" data-query="What is the air quality and PM2.5?">🩺 AQI & mask advice?</button>
           </div>
         </div>
       </div>
 
-      <!-- MODAL 2: ONBOARDING PERSONA PICKER (Slide 2 & 4) -->
+      <!-- ==========================================================================
+           MODAL 2: ONBOARDING PERSONA PICKER (Slide 2 & 4)
+           ========================================================================== -->
       <div class="modal-overlay" id="onboardingModal">
         <div class="modal-sheet">
           <div class="modal-drag-handle"></div>
           <div class="modal-header-title">
             <h2>Customize Your Weather</h2>
-            <button class="modal-close-btn" onclick="document.getElementById('onboardingModal').classList.remove('active')">&times;</button>
+            <button class="modal-close-btn" id="closeOnboardingBtn">&times;</button>
           </div>
           <p style="font-size: 0.8rem; color: #64748b; line-height: 1.4;">
             Weather affects everyone differently. Select the roles that matter to you, and Mausam will assemble the right insights automatically.
@@ -277,6 +295,42 @@
           <button class="secondary-link-btn" id="skipOnboardingBtn">
             Skip (Auto-detect from location & context)
           </button>
+        </div>
+      </div>
+
+      <!-- ==========================================================================
+           MODAL 3: DOPPLER WEATHER RADAR & CLOUD SATELLITE (IMD Live Viewer)
+           ========================================================================== -->
+      <div class="modal-overlay" id="radarModal">
+        <div class="modal-sheet radar-modal-sheet">
+          <div class="modal-drag-handle"></div>
+          <div class="modal-header-title">
+            <h2><i class="fa-solid fa-satellite-dish" style="color: #2563eb;"></i> IMD Doppler Radar & Satellite</h2>
+            <button class="modal-close-btn" id="closeRadarBtn">&times;</button>
+          </div>
+          <div class="radar-preview-box">
+            <div class="radar-map-canvas" id="radarCanvas">
+              <div class="radar-sweep-beam"></div>
+              <div class="radar-storm-cluster cluster-1"></div>
+              <div class="radar-storm-cluster cluster-2"></div>
+              <div class="radar-storm-cluster cluster-3"></div>
+              <div class="radar-crosshair"></div>
+              <div class="radar-city-marker marker-delhi" title="Delhi">Delhi</div>
+              <div class="radar-city-marker marker-mumbai" title="Mumbai">Mumbai</div>
+              <div class="radar-city-marker marker-ludhiana" title="Ludhiana">Ludhiana</div>
+              <div class="radar-city-marker marker-bengaluru" title="Bengaluru">Bengaluru</div>
+              <div class="radar-timestamp-overlay" id="radarTimestamp">Live Doppler Loop · Refl: Max 48 dBZ</div>
+            </div>
+            <div class="radar-legend">
+              <span>Light Rain</span>
+              <div class="legend-gradient"></div>
+              <span>Severe Storm</span>
+            </div>
+          </div>
+          <div class="radar-controls-strip">
+            <button class="radar-play-btn" id="radarPlayToggle"><i class="fa-solid fa-pause"></i> Pause Loop</button>
+            <span style="font-size: 0.72rem; color: #64748b;">Source: IMD Radar Network & INSAT-3DR</span>
+          </div>
         </div>
       </div>
 

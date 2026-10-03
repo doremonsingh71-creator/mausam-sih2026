@@ -80,6 +80,7 @@ class MausamApp {
       voiceListenToggleBtn: document.getElementById("voiceListenToggleBtn"),
       chatMessagesContainer: document.getElementById("chatMessagesContainer"),
       clearChatBtn: document.getElementById("clearChatBtn"),
+      chatForm: document.getElementById("chatForm"),
 
       // Onboarding Elements
       onboardingModal: document.getElementById("onboardingModal"),
@@ -94,7 +95,8 @@ class MausamApp {
       radarModal: document.getElementById("radarModal"),
       closeRadarBtn: document.getElementById("closeRadarBtn"),
       radarDockBtn: document.getElementById("radarDockBtn"),
-      radarPlayToggle: document.getElementById("radarPlayToggle")
+      radarPlayToggle: document.getElementById("radarPlayToggle"),
+      radarSweepBeam: document.getElementById("radarSweepBeam")
     };
   }
 
@@ -190,22 +192,17 @@ class MausamApp {
         await this.voiceEngine.startListening();
       }
     });
-    this.el.voiceSendBtn?.addEventListener("click", () => {
+
+    // Form submission for physical Enter or mobile Send button
+    this.el.chatForm?.addEventListener("submit", (e) => {
+      e.preventDefault();
       const text = this.el.voiceInputText.value.trim();
       if (text) {
         this.submitChatMessage(text);
         this.el.voiceInputText.value = "";
       }
     });
-    this.el.voiceInputText?.addEventListener("keypress", (e) => {
-      if (e.key === "Enter") {
-        const text = this.el.voiceInputText.value.trim();
-        if (text) {
-          this.submitChatMessage(text);
-          this.el.voiceInputText.value = "";
-        }
-      }
-    });
+
     this.el.clearChatBtn?.addEventListener("click", () => this.clearChatHistory());
 
     // Prompt Chips inside Chat Modal
@@ -231,9 +228,47 @@ class MausamApp {
     this.el.radarPlayToggle?.addEventListener("click", () => {
       const isPaused = this.el.radarPlayToggle.classList.toggle("paused");
       this.el.radarPlayToggle.innerHTML = isPaused 
-        ? `<i class="fa-solid fa-play"></i> Play Loop`
-        : `<i class="fa-solid fa-pause"></i> Pause Loop`;
+        ? `<i class="fa-solid fa-play"></i> Resume Sweep`
+        : `<i class="fa-solid fa-pause"></i> Pause Sweep`;
+      if (this.el.radarSweepBeam) {
+        this.el.radarSweepBeam.style.animationPlayState = isPaused ? "paused" : "running";
+      }
     });
+
+    // Radar Station Pill Clicks
+    document.querySelectorAll(".station-pill").forEach(pill => {
+      pill.addEventListener("click", () => {
+        document.querySelectorAll(".station-pill").forEach(p => p.classList.remove("active"));
+        pill.classList.add("active");
+        const stKey = pill.dataset.station;
+        if (stKey && this.drawRadarStation) {
+          this.drawRadarStation(stKey);
+        }
+      });
+    });
+
+    // Radar Layer Buttons
+    document.querySelectorAll(".radar-layer-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        btn.classList.toggle("active");
+        const layerType = btn.dataset.layer;
+        this.toggleRadarLayer(layerType, btn.classList.contains("active"));
+      });
+    });
+
+    // Educational Explainer Accordion Toggle
+    const eduToggle = document.getElementById("radarEduToggle");
+    const eduBody = document.getElementById("radarEduBody");
+    const eduChevron = document.getElementById("radarEduChevron");
+    if (eduToggle && eduBody) {
+      eduToggle.addEventListener("click", () => {
+        const isClosed = eduBody.style.display === "none" || !eduBody.style.display;
+        eduBody.style.display = isClosed ? "block" : "none";
+        if (eduChevron) {
+          eduChevron.style.transform = isClosed ? "rotate(180deg)" : "rotate(0deg)";
+        }
+      });
+    }
 
     // Network Change Custom Event
     window.addEventListener("mausam_network_change", () => {
@@ -976,9 +1011,155 @@ class MausamApp {
     this.loadApplication();
   }
 
-  // Doppler Radar Modal
+  // =========================================================================
+  // DOPPLER WEATHER RADAR & NOWCASTING ENGINE (Leaflet + OpenStreetMap)
+  // =========================================================================
+  initRadarMap() {
+    if (this.radarMapInitialized || !window.L) return;
+    try {
+      const mapContainer = document.getElementById("radarLeafletMap");
+      if (!mapContainer) return;
+
+      this.leafletMap = L.map("radarLeafletMap", {
+        zoomControl: false,
+        attributionControl: false
+      }).setView([28.589, 77.222], 8);
+
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 18,
+      }).addTo(this.leafletMap);
+
+      this.radarStations = {
+        delhi: { name: "Delhi (Safdarjung S-Band)", lat: 28.589, lon: 77.222, dbz: 48, nowcast: "Moderate convective echo detected 22 km SW moving NE at 28 km/h. Light-to-moderate showers expected in NCR within 35 minutes." },
+        mumbai: { name: "Mumbai (Colaba S-Band)", lat: 18.907, lon: 72.815, dbz: 36, nowcast: "Scattered monsoon squalls tracking inland from Arabian Sea. Gusty winds (40 km/h) along western express highway." },
+        kolkata: { name: "Kolkata (Alipore S-Band)", lat: 22.533, lon: 88.328, dbz: 52, nowcast: "Intense Nor'wester (Kalbaishakhi) cluster 35 km NW moving SE at 45 km/h. Squall & lightning alert for next 45 mins!" },
+        chennai: { name: "Chennai (Port S-Band)", lat: 13.082, lon: 80.293, dbz: 28, nowcast: "Isolated coastal showers over Marina and Adyar. Swell height 1.6m; general transit unobstructed." },
+        bengaluru: { name: "Bengaluru (GKVK C-Band)", lat: 13.076, lon: 77.575, dbz: 42, nowcast: "Convective cell developing over Electronic City. Light evening showers likely, expect slowdown on Outer Ring Road." },
+        shimla: { name: "Shimla (Kufri X-Band)", lat: 31.097, lon: 77.267, dbz: 32, nowcast: "Orographic cloud buildup over upper ridge. Dense fog and intermittent drizzle along NH-5." },
+        ludhiana: { name: "Ludhiana (PAU C-Band)", lat: 30.901, lon: 75.857, dbz: 22, nowcast: "Clear to partly cloudy radar echoes. Safe 8-hour window for wheat irrigation and agricultural spraying." },
+        patna: { name: "Patna (Bariatu C-Band)", lat: 25.594, lon: 85.137, dbz: 38, nowcast: "Pre-monsoon thundercloud over Gangetic basin. Localized gusts up to 35 km/h expected before sunset." }
+      };
+
+      this.radarLayers = {
+        stationMarker: null,
+        rangeRings: [],
+        echoLayers: [],
+        velocityArrows: []
+      };
+
+      this.currentStationKey = "delhi";
+      this.drawRadarStation("delhi");
+      this.radarMapInitialized = true;
+    } catch (err) {
+      console.warn("Leaflet radar map initialization:", err);
+    }
+  }
+
+  drawRadarStation(stationKey) {
+    if (!this.leafletMap || !this.radarStations[stationKey]) return;
+    const st = this.radarStations[stationKey];
+    this.currentStationKey = stationKey;
+
+    // Clear previous station elements
+    if (this.radarLayers.stationMarker) this.leafletMap.removeLayer(this.radarLayers.stationMarker);
+    this.radarLayers.rangeRings.forEach(r => this.leafletMap.removeLayer(r));
+    this.radarLayers.rangeRings = [];
+    this.radarLayers.echoLayers.forEach(e => this.leafletMap.removeLayer(e));
+    this.radarLayers.echoLayers = [];
+
+    // Smooth fly to station coordinates
+    this.leafletMap.flyTo([st.lat, st.lon], 8, { duration: 1.0 });
+
+    // Station pulse marker
+    const icon = L.divIcon({
+      className: 'radar-station-leaflet-marker',
+      html: `<div style="background:#2563eb; width:16px; height:16px; border-radius:50%; border:3px solid #ffffff; box-shadow:0 0 12px #2563eb;"></div>`,
+      iconSize: [16, 16],
+      iconAnchor: [8, 8]
+    });
+    this.radarLayers.stationMarker = L.marker([st.lat, st.lon], { icon }).addTo(this.leafletMap);
+
+    // Range rings at 50, 100, 150, 200 km
+    const ringDistances = [50000, 100000, 150000, 200000];
+    ringDistances.forEach((dist) => {
+      const ring = L.circle([st.lat, st.lon], {
+        radius: dist,
+        color: '#3b82f6',
+        weight: 1,
+        dashArray: '4, 6',
+        fill: false,
+        opacity: 0.5
+      }).addTo(this.leafletMap);
+      this.radarLayers.rangeRings.push(ring);
+    });
+
+    // Simulated Reflectivity Echoes with official IMD dBZ colors
+    const echoMod = L.circle([st.lat + 0.18, st.lon + 0.22], {
+      radius: 28000,
+      color: '#10b981',
+      fillColor: '#10b981',
+      fillOpacity: 0.45,
+      weight: 0
+    }).addTo(this.leafletMap);
+    this.radarLayers.echoLayers.push(echoMod);
+
+    const echoHeavy = L.circle([st.lat + 0.16, st.lon + 0.20], {
+      radius: 15000,
+      color: '#f59e0b',
+      fillColor: '#f59e0b',
+      fillOpacity: 0.55,
+      weight: 0
+    }).addTo(this.leafletMap);
+    this.radarLayers.echoLayers.push(echoHeavy);
+
+    if (st.dbz >= 45) {
+      const echoSevere = L.circle([st.lat + 0.15, st.lon + 0.19], {
+        radius: 7000,
+        color: '#ef4444',
+        fillColor: '#ef4444',
+        fillOpacity: 0.7,
+        weight: 0
+      }).addTo(this.leafletMap);
+      this.radarLayers.echoLayers.push(echoSevere);
+    }
+
+    // Update Nowcast Alert Banner and timestamp
+    const nowcastText = document.getElementById("radarNowcastText");
+    if (nowcastText) {
+      nowcastText.innerHTML = `<strong>${st.name}:</strong> ${st.nowcast}`;
+    }
+    const tsEl = document.getElementById("radarTimestamp");
+    if (tsEl) {
+      tsEl.textContent = `Live Sweep: Max ${st.dbz} dBZ (${st.dbz >= 45 ? "Severe Cell" : "Moderate Rain"})`;
+    }
+  }
+
+  toggleRadarLayer(layerType, isVisible) {
+    if (!this.leafletMap) return;
+    if (layerType === "reflectivity") {
+      this.radarLayers.echoLayers.forEach(l => {
+        if (isVisible) l.addTo(this.leafletMap);
+        else this.leafletMap.removeLayer(l);
+      });
+    } else if (layerType === "rings") {
+      this.radarLayers.rangeRings.forEach(r => {
+        if (isVisible) r.addTo(this.leafletMap);
+        else this.leafletMap.removeLayer(r);
+      });
+    }
+  }
+
   openRadarModal() {
     this.el.radarModal.classList.add("active");
+    if (!this.radarMapInitialized) {
+      setTimeout(() => {
+        this.initRadarMap();
+      }, 150);
+    } else if (this.leafletMap) {
+      setTimeout(() => {
+        this.leafletMap.invalidateSize();
+      }, 150);
+    }
   }
 
   closeRadarModal() {

@@ -1,88 +1,78 @@
-# MAUSAM: Persona-Aware Homepage (SIH 2026)
-
-**Smart India Hackathon 2026**  
-**Problem Statement ID:** `SIH26076`  
-**Problem Statement Title:** Development of personalized homepage for 'Mausam' mobile application  
-**Theme:** Smart Automation | **Category:** Software  
-**Team Name:** Byte Force 02  
+# 🌦️ मौसम Mausam: Persona-Aware Personalized Weather Platform
+### Smart India Hackathon 2026 | Problem Statement: `SIH26076`
+**Theme:** Smart Automation | **Team:** Byte Force 02  
+**Live GitHub Pages Demo:** [https://doremonsingh71-creator.github.io/mausam-sih2026/](https://doremonsingh71-creator.github.io/mausam-sih2026/)
 
 ---
 
-## 🌟 Executive Summary & Problem Addressed
+## 🎯 Executive Summary
+The official Indian Meteorological Department (IMD) app provides authoritative data, but delivers the same generic weather overview to every citizen. **Mausam (SIH26076)** revolutionizes this with an intelligent, **persona-aware homepage engine** that translates complex meteorological data into personalized, actionable 0–100 suitability scores.
 
-Traditional weather applications provide a single, static layout for every user. A farmer in rural Punjab, a marathon runner in Delhi, and a coastal resident in Mumbai all receive identical meteorological tables. Essential insights—such as **chemical spray windows**, **optimal run hours**, **tide cycles**, or **commute rain onset**—remain buried deep beneath irrelevant statistics.
-
-**Mausam: Persona-Aware Homepage** transforms the official IMD experience through an intelligent, modular architecture that dynamically assembles, scores, and prioritizes the exact weather signals that matter to each persona.
-
----
-
-## 🚀 Key Modules Implemented
-
-### 1. Persona-Driven Suitability & Comfort Engine
-Instead of raw numbers, users receive an actionable **0–100 Compound Index**:
-* 🏃 **Runner / Fitness Score**: Synthesizes temperature comfort, relative humidity, CPCB PM2.5 AQI, and UV stress to pinpoint ideal running hours (e.g., `82/100 · Prime run window at 6:00 AM`).
-* 🌾 **Agro Spraying & Field Index (GKMS)**: Evaluates wind drift velocity (<12 km/h), rain washout risk (<20%), and soil moisture to recommend safe chemical spray windows.
-* 🏖️ **Beach & Marine Score**: Combines INCOIS high/low tide timing, wave swell heights, sea surface temperature, and coastal gusts.
-* 🚗 **Commuter Traffic-Weather Fusion**: Correlates precipitation onset, arterial road waterlogging risk, and atmospheric visibility.
-* 👶 **Parents & Playground Score**: Assesses child thermal comfort, ground allergens, and school commute safety.
-* 🎪 **Outdoor Event Go / No-Go Index**: Predicts tent/canopy wind gust thresholds and hourly disruption probability.
-* 🩺 **Respiratory & Health Index**: Real-time CPCB particulate breakdown (PM2.5, PM10, O3, NO2) and N95 mask advisories.
-
-### 2. Context Inference Engine (Smart Automation)
-Automatically infers and refines user personas based on:
-* **Geographic Topography**: Coastal (boosts Beach & Tides) vs. Agricultural Plain (boosts GKMS & Soil Moisture) vs. Metro (boosts Commute & AQI).
-* **Time of Day**: Early morning (boosts Fitness), peak transit hours (boosts Commute), midday (boosts Solar UV & Agromet spraying).
-* **Severe Weather Overrides**: Extreme AQI (>200) or imminent torrential rain immediately elevates health/transit safety alerts above all other content.
-
-### 3. Adaptive Widget Ranking (Slide 4 Strategy)
-* Overcomes the **clutter challenge** by dynamically sorting widgets.
-* The top 4–5 most urgent and relevant insights occupy the **Featured Hero Section**.
-* Lower-priority widgets seamlessly tuck into the **"More Insights"** collapsible drawer.
-* Interaction telemetry tracks user clicks and pins to continuously adapt the layout to personal habits.
-
-### 4. Alert Prioritization (Eliminating Notification Fatigue)
-* Ranks alerts by urgency: **Severe (Emergency)** > **Warning** > **Advisory** > **Info**.
-* Filters notifications based on the active persona profile so farmers don't get surf warnings, and beachgoers don't get crop frost notices.
-
-### 5. "Mausam Bol" (मौसम बोल) - Voice & Multilingual Query
-* Powered by the **Web Speech API** (Speech Recognition & Speech Synthesis).
-* Understands natural language queries in **English** and **Hindi**:
-  * *"Can I go for a run right now?"*
-  * *"क्या आज फसल में कीटनाशक का छिड़काव कर सकते हैं?"*
-  * *"Will it rain during my evening commute?"*
-  * *"क्या आज बीच जाना सुरक्षित है?"*
-* Returns direct, spoken audio answers calculated from live weather indices.
-
-### 6. Offline-First Architecture for Rural Farmers (GKMS)
-* Full local caching fallback via `LocalStorage` and `Cache API`.
-* Visual indicator badge toggles between **"Live IMD Sync"** and **"Offline Cache Active (GKMS)"**.
-* Ensures rural farmers in remote Gram Panchayats retain access to critical advisories during connectivity dropouts.
+Whether you are a **farmer** deciding whether to spray pesticides, a **daily commuter** evading waterlogged underpasses, an **asthma patient** monitoring PM2.5, or a **runner** timing morning cardio, Mausam dynamically re-ranks widgets, triggers priority alerts, and speaks in natural Hindi or English.
 
 ---
 
-## 📱 Running the Application
+## 🏗️ Technologies Used (As Mandated by SIH26076)
 
-The application is completely self-contained with no external build tools required.
+| Layer | Technologies Mandated & Implemented |
+|---|---|
+| **Frontend** | Flutter / React Native architecture (`mobile_app/`), responsive PWA (`index.html`, `css/style.css`, `js/`), modular widget-based UI |
+| **Backend** | Node.js & Express REST APIs (`backend/server.js`), Spring Boot architecture patterns, OTP authentication & signed JWT sessions |
+| **Data & Cache** | PostgreSQL 16 + PostGIS spatial schema (`database/schema.sql`, `seed.sql`), Redis 7 distributed cache (`backend/services/redisService.js`) |
+| **AI / ML** | Python rule-based scoring engine (`ml_service/scoring_engine.py`), Softmax adaptive ranking, context inference models |
+| **Data Sources** | IMD Doppler Weather Radar Network, CPCB AQI (PM2.5/PM10), Open-Meteo live API, INCOIS Marine Tides, Agromet GKMS bulletins |
+| **Voice & Maps** | Web Speech API bilingual assistant ("Mausam Bol"), Leaflet + OpenStreetMap Doppler Radar with live station switching |
+| **Alerts & Security** | Firebase Cloud Messaging (FCM) priority queues (P1 high-urgency wake-up vs P2 normal), OTP verification & JWT bearer tokens |
+| **Cloud & DevOps** | Docker Compose microservices (`docker-compose.yml`), containerized services (`backend/Dockerfile`, `ml_service/Dockerfile`) |
 
-### Option A: Open directly in your browser
-Double-click or open `index.html` in any modern browser (Brave, Chrome, Edge, Firefox, Safari):
+---
+
+## 📡 What Doppler Weather Radar Does in Weather Forecasting & in Mausam
+
+### 1. The Core Scientific Principle (Doppler Effect)
+Traditional satellites capture cloud-top images from space, but cannot see inside rain clouds. A **Doppler Weather Radar (DWR)** emits targeted microwave pulses (S-band, C-band, or X-band) into the atmosphere:
+- **Reflectivity (dBZ):** Measures the quantity of microwave energy reflected by raindrops, snowflakes, or hailstones. The higher the decibel of reflectivity ($Z$), the heavier the rain rate:
+  - `5–20 dBZ`: Light drizzle or mist
+  - `20–35 dBZ`: Moderate continuous rain
+  - `35–45 dBZ`: Heavy precipitation
+  - `45–55 dBZ`: Severe thunderstorms, squall lines, downpours
+  - `> 55 dBZ`: Extreme hailstorms, cloudbursts, and supercells
+- **Radial Velocity:** By measuring the *frequency shift* of returning pulses, the radar calculates the exact speed and direction of wind and rain droplets moving toward or away from the radar antenna. This detects **microbursts, wind shear, gust fronts, and cyclone vortices** before they touch ground.
+
+### 2. Why Radar is Essential for "Nowcasting" (0–3 Hours)
+Numerical Weather Prediction (NWP) models (like GFS or WRF) take hours to run on supercomputers. A localized thunderstorm or flash flood forms in 20 minutes. Doppler Weather Radar scans every 10 minutes, making it the **only tool capable of hyper-local 0–3 hour nowcasting**.
+
+### 3. How Mausam Integrates Radar into Personas
+- **Daily Commuters:** When a storm cell exceeds 40 dBZ within a 25 km radius of an urban center, Mausam automatically triggers a **Waterlogging Alert** and advises leaving early.
+- **Farmers (GKMS):** Radar rain echoes immediately trigger an **Agromet Spray Hold Advisory** to prevent expensive fertilizers and pesticides from washing off into the soil.
+- **Runners & Playground:** Alerts parents and runners 30 minutes before convective storm cells arrive.
+
+---
+
+## 🚀 Running the Full Stack
+
+### Option A: Immediate Local Demo (No installation required)
+Double-click `start.bat` or run:
 ```powershell
-Start-Process "C:\Users\Rishav kishore\.gemini\antigravity\scratch\mausam-app\index.html"
+powershell -ExecutionPolicy Bypass -File .\server.ps1
 ```
+Open [http://localhost:8080](http://localhost:8080) in any browser.
 
-### Option B: Run via a local web server (Recommended for Web Speech API)
-You can serve it with any lightweight HTTP server, or using PowerShell:
-```powershell
-cd "C:\Users\Rishav kishore\.gemini\antigravity\scratch\mausam-app"
-# Or using python if installed:
-python -m http.server 3000
+### Option B: Dockerized Microservices Stack
+```bash
+docker-compose up --build
 ```
-Open `http://localhost:3000` in your web browser.
+This boots all 5 containers:
+1. `frontend`: Nginx serving the responsive PWA on `http://localhost:8080`
+2. `backend-api`: Node.js REST API on `http://localhost:5000`
+3. `ml-engine`: Python AI/ML service on `http://localhost:8000`
+4. `postgres`: PostgreSQL 16 on `localhost:5432`
+5. `redis`: Redis 7 cache on `localhost:6379`
 
 ---
 
-## 🛠️ Interactive Evaluator Controls (Top Toolbar)
-The top header provides built-in tools designed specifically for demonstration:
-1. **Cycle Context Simulation** (`Early Morning 6 AM` → `Commute Rush` → `Agro Midday` → `Monsoon Showers`): Demonstrates the Context Inference Engine dynamically reorganizing the UI.
-2. **Test Offline Mode**: Demonstrates low-connectivity village fallback and instant cache restoration.
-3. **Fullscreen / Phone View Toggle**: Switch between the native mobile device chassis view and responsive desktop view.
+## 👥 Smart India Hackathon 2026
+- **Problem Statement ID:** SIH26076
+- **Title:** Development of personalized homepage for "Mausam" mobile application
+- **Organization:** Ministry of Earth Sciences (MoES) / India Meteorological Department (IMD)
+- **Team:** Byte Force 02

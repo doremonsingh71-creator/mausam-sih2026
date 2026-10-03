@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Mausam - Persona-Aware Weather (SIH 2026)</title>
+  
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- SIH 2026 Presentation Top Bar -->
+  <header class="sih-header-bar">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <span class="tag"><i class="fa-solid fa-trophy"></i> SIH 2026</span>
+      <div>
+        <strong>PS-SIH26076:</strong> Personalized Mausam Homepage · <em>Team Byte Force 02</em>
+      </div>
+    </div>
+    <div class="sih-controls">
+      <button id="simTimeBtn" class="sim-control-btn" title="Cycle through time & severe weather scenarios">
+        <i class="fa-solid fa-clock-rotate-left"></i> Early Morning (6 AM)
+      </button>
+      <button id="offlineToggleBtn" class="sim-control-btn" title="Simulate village low-connectivity mode">
+        <i class="fa-solid fa-plane"></i> Test Offline Mode
+      </button>
+      <button id="viewToggleBtn" class="view-toggle-btn" title="Switch between Mobile Frame and Fullscreen">
+        <i class="fa-solid fa-expand"></i> Fullscreen View
+      </button>
+    </div>
+  </header>
+
+  <!-- Device Container Frame -->
+  <main class="device-container" id="deviceContainer">
+    <div class="device-frame">
+      
+      <!-- Phone Hardware Mockup Bar -->
+      <div class="phone-status-bar">
+        <span>09:41</span>
+        <div class="phone-island">
+          <div class="island-camera"></div>
+          <div class="island-sensor"></div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <i class="fa-solid fa-signal" style="font-size: 0.7rem;"></i>
+          <i class="fa-solid fa-wifi" style="font-size: 0.7rem;"></i>
+          <i class="fa-solid fa-battery-full" style="font-size: 0.8rem;"></i>
+        </div>
+      </div>
+
+      <!-- Scrollable Application Screen -->
+      <div class="app-screen">
+        
+        <!-- App Top Bar & Brand -->
+        <div class="app-topbar">
+          <div class="brand-section">
+            <div class="imd-logo-emblem">
+              <i class="fa-solid fa-cloud-sun-rain"></i>
+            </div>
+            <div class="brand-title">
+              <h1>मौसम Mausam</h1>
+              <span>India Meteorological Dept (IMD)</span>
+            </div>
+          </div>
+          <div class="topbar-actions">
+            <div class="network-badge" id="networkBadge">
+              <span class="pulse-dot"></span>
+              <span id="networkText">Live IMD Sync</span>
+            </div>
+            <button class="icon-btn-circle" id="openOnboardingBtn" title="Customize Your Personas">
+              <i class="fa-solid fa-sliders"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Location & Agro Panchayat Bar -->
+        <div class="location-selector-bar">
+          <div class="location-info">
+            <i class="fa-solid fa-location-dot loc-pin-icon"></i>
+            <div class="location-names">
+              <span class="city-name" id="cityDisplayName">Select Regional Hub</span>
+              <span class="panchayat-tag" id="panchayatDisplayName">Gramin Krishi Mausam Sewa</span>
+            </div>
+          </div>
+          <select id="locationSelect" class="location-dropdown-select">
+            <option value="delhi">New Delhi (Metro / AQI Focus)</option>
+            <option value="mumbai">Mumbai (Coastal / Marine Tide)</option>
+            <option value="ludhiana">Ludhiana (Punjab / GKMS Agro)</option>
+            <option value="bengaluru">Bengaluru (Plateau / Commute)</option>
+            <option value="shimla">Shimla (Hill Station / Cold Wave)</option>
+          </select>
+        </div>
+
+        <!-- Context Inference Engine Badge (Slide 2 & 3) -->
+        <div class="context-insight-chip" id="contextChip">
+          <div class="insight-text" id="contextText">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+            <span>Context Engine Analyzing Live Parameters...</span>
+          </div>
+          <span class="persona-auto-tag">Auto-Tuned</span>
+        </div>
+
+        <!-- Horizontal Persona Switcher Pills (Slide 6 Prototype Mockup) -->
+        <nav class="persona-pills-wrapper" id="personaPillsContainer">
+          <!-- Dynamically populated -->
+        </nav>
+
+        <!-- HERO PERSONA CARD (Slide 6 System Prototype Window) -->
+        <section class="hero-persona-card" id="heroPersonaCard">
+          <div class="hero-greeting" id="heroGreeting">
+            <span>Good morning, Runner</span>
+            <div class="hero-weather-mini">
+              <i class="fa-solid fa-cloud-sun"></i>
+              <span>24°C · Hazy</span>
+            </div>
+          </div>
+
+          <div class="hero-score-wrapper">
+            <div class="hero-score-left">
+              <span class="score-title-label" id="heroScoreLabel">RUN SCORE</span>
+              <div class="hero-big-score" id="heroScoreVal">
+                82<span class="denom">/100</span>
+              </div>
+            </div>
+            <div class="hero-score-badge" id="heroScoreBadge">
+              Optimal Window
+            </div>
+          </div>
+
+          <div class="hero-verdict-text" id="heroVerdict">
+            Good for a 6 AM run
+          </div>
+          <div class="hero-subtext-advice" id="heroSubtext">
+            Air quality moderate with cool morning breeze. Hydrate well.
+          </div>
+
+          <div class="hero-quick-metrics" id="heroMetrics">
+            <!-- Dynamically populated -->
+          </div>
+        </section>
+
+        <!-- PRIORITY ALERTS AREA (Slide 2 & 4: Urgency-Ranked, avoids alert fatigue) -->
+        <section class="priority-alerts-area" id="priorityAlertsArea">
+          <!-- Dynamically populated -->
+        </section>
+
+        <!-- MODULAR ADAPTIVE WIDGET GRID (Slide 2 & 3: Top 4-5 hero widgets) -->
+        <div class="section-headline">
+          <h3><i class="fa-solid fa-layer-group" style="color: #2563eb;"></i> Persona Insights</h3>
+          <span class="ranking-indicator">Adaptive Ranking Active</span>
+        </div>
+
+        <section class="widgets-grid" id="featuredWidgetsContainer">
+          <!-- Top 4-5 dynamically ranked widgets rendered here -->
+        </section>
+
+        <!-- MORE INSIGHTS (Slide 4 Strategy: Prevents Clutter) -->
+        <div class="more-insights-wrapper">
+          <button class="more-insights-toggle" id="moreInsightsToggle">
+            <span><i class="fa-solid fa-ellipsis"></i> View More Insights (<span id="moreInsightsCount">0</span>)</span>
+            <i class="fa-solid fa-chevron-down" id="moreInsightsChevron" style="transition: transform 0.3s ease;"></i>
+          </button>
+          <div class="secondary-widgets-container" id="secondaryWidgetsContainer">
+            <!-- Deprioritized widgets here -->
+          </div>
+        </div>
+
+      </div><!-- /app-screen -->
+
+      <!-- BOTTOM NAVIGATION DOCK -->
+      <footer class="bottom-dock">
+        <button class="dock-item active">
+          <i class="fa-solid fa-house"></i>
+          <span>Home</span>
+        </button>
+        <button class="dock-item" id="radarDockBtn" onclick="alert('Mausam Doppler Weather Radar & Cloud Satellite Imagery simulation active.')">
+          <i class="fa-solid fa-satellite-dish"></i>
+          <span>Radar</span>
+        </button>
+        <button class="voice-mic-main-btn" id="micDockBtn" title="Speak to Mausam Bol (Voice Assistant)">
+          <i class="fa-solid fa-microphone"></i>
+        </button>
+        <button class="dock-item" id="agrometDockBtn" onclick="mausamApp.activePersona='farmer'; mausamApp.renderPersonaPills(); mausamApp.renderHeroSection(); mausamApp.renderWidgets();">
+          <i class="fa-solid fa-seedling"></i>
+          <span>GKMS</span>
+        </button>
+        <button class="dock-item" onclick="mausamApp.openOnboardingModal()">
+          <i class="fa-solid fa-user-gear"></i>
+          <span>Persona</span>
+        </button>
+      </footer>
+
+      <!-- MODAL 1: VOICE ASSISTANT ("मौसम बोल" / Mausam Bol) -->
+      <div class="modal-overlay" id="voiceModal">
+        <div class="modal-sheet">
+          <div class="modal-drag-handle"></div>
+          <div class="modal-header-title">
+            <h2><i class="fa-solid fa-microphone-lines" style="color: #2563eb;"></i> Mausam Bol (मौसम बोल)</h2>
+            <button class="modal-close-btn" id="closeVoiceBtn">&times;</button>
+          </div>
+          <p style="font-size: 0.78rem; color: #64748b;">
+            Multilingual Voice & NLP Query engine grounded in real-time Comfort Indices.
+          </p>
+
+          <div class="voice-wave-container" id="voiceWave">
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+          </div>
+
+          <div style="text-align: center; margin-bottom: 12px;">
+            <span id="voiceStatusText" style="font-size: 0.8rem; font-weight: 600; color: #1e293b;">
+              Tap mic to speak or select a sample question:
+            </span>
+          </div>
+
+          <div class="voice-query-input-box">
+            <input type="text" id="voiceInputText" placeholder="Ask in English or हिंदी (e.g. Can I run today?)...">
+            <button id="voiceListenToggleBtn" class="icon-btn-circle" title="Listen with Mic" style="width: 32px; height: 32px;">
+              <i class="fa-solid fa-microphone"></i>
+            </button>
+            <button id="voiceSendBtn" class="icon-btn-circle active" title="Send Query" style="width: 32px; height: 32px;">
+              <i class="fa-solid fa-paper-plane"></i>
+            </button>
+          </div>
+
+          <!-- Spoken Response Card -->
+          <div class="voice-response-card" id="voiceResponseCard" style="display: none;">
+            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px; font-size: 0.75rem; font-weight: 700; color: #2563eb;">
+              <i class="fa-solid fa-volume-high"></i> Mausam Voice Response:
+            </div>
+            <p id="voiceResponseText"></p>
+          </div>
+
+          <div style="font-size: 0.74rem; font-weight: 700; color: #475569; margin-top: 10px;">
+            Quick Prompts:
+          </div>
+          <div class="voice-quick-prompts">
+            <button class="prompt-chip" data-query="Can I go for a run right now?">🏃 Can I run right now?</button>
+            <button class="prompt-chip" data-query="क्या आज फसल में कीटनाशक छिड़क सकते हैं?">🌾 क्या आज कीटनाशक छिड़कें?</button>
+            <button class="prompt-chip" data-query="Will it rain during evening commute?">🚗 Rain during commute?</button>
+            <button class="prompt-chip" data-query="Is today good for the beach and swimming?">🏖️ Beach & tide condition?</button>
+            <button class="prompt-chip" data-query="What is the air quality and PM2.5?">🩺 AQI & mask advice?</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL 2: ONBOARDING PERSONA PICKER (Slide 2 & 4) -->
+      <div class="modal-overlay" id="onboardingModal">
+        <div class="modal-sheet">
+          <div class="modal-drag-handle"></div>
+          <div class="modal-header-title">
+            <h2>Customize Your Weather</h2>
+            <button class="modal-close-btn" onclick="document.getElementById('onboardingModal').classList.remove('active')">&times;</button>
+          </div>
+          <p style="font-size: 0.8rem; color: #64748b; line-height: 1.4;">
+            Weather affects everyone differently. Select the roles that matter to you, and Mausam will assemble the right insights automatically.
+          </p>
+
+          <div class="onboarding-grid" id="onboardingGrid">
+            <!-- Dynamically populated 8 personas -->
+          </div>
+
+          <button class="primary-btn" id="saveOnboardingBtn">
+            Apply Personalized Dashboard
+          </button>
+          <button class="secondary-link-btn" id="skipOnboardingBtn">
+            Skip (Auto-detect from location & context)
+          </button>
+        </div>
+      </div>
+
+    </div><!-- /device-frame -->
+  </main>
+
+  <!-- Script Modules -->
+  <script type="module" src="js/app.js"></script>
+
+</body>
+</html>

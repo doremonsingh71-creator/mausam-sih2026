@@ -2,7 +2,7 @@
  * MAUSAM: Persona-Aware Weather Application
  * Smart India Hackathon 2026 - Problem Statement SIH26076
  * Team: Byte Force 02
- * Main Application Orchestrator
+ * Enhanced Application Orchestrator with Full Conversational Assistant & Chat History
  */
 
 import { INDIAN_LOCATIONS, PERSONA_DEFINITIONS } from "./data/mockData.js";
@@ -25,13 +25,19 @@ class MausamApp {
     this.currentWeatherData = null;
     this.comfortScores = null;
     this.contextInference = null;
-    this.simulatedTime = null; // null uses current time, or can be simulated for demo
+    this.simulatedTime = null;
     this.isOfflineSimulated = false;
+
+    // Chat History State
+    this.chatStorageKey = "mausam_chat_history_v2";
+    this.chatMessages = this.loadChatHistory();
 
     this.initElements();
     this.initVoiceEngine();
     this.attachEventListeners();
+    this.startClock();
     this.loadApplication();
+    this.renderChatHistory();
   }
 
   initElements() {
@@ -60,25 +66,49 @@ class MausamApp {
       moreInsightsToggle: document.getElementById("moreInsightsToggle"),
       moreInsightsCount: document.getElementById("moreInsightsCount"),
       moreInsightsChevron: document.getElementById("moreInsightsChevron"),
-      
-      // Modals
+      statusBarClock: document.getElementById("statusBarClock"),
+      dynamicIsland: document.getElementById("dynamicIsland"),
+      islandStatusPill: document.getElementById("islandStatusPill"),
+
+      // Conversational Assistant Elements
+      voiceModal: document.getElementById("voiceModal"),
+      closeVoiceBtn: document.getElementById("closeVoiceBtn"),
+      micDockBtn: document.getElementById("micDockBtn"),
+      voiceWave: document.getElementById("voiceWave"),
+      voiceInputText: document.getElementById("voiceInputText"),
+      voiceSendBtn: document.getElementById("voiceSendBtn"),
+      voiceListenToggleBtn: document.getElementById("voiceListenToggleBtn"),
+      chatMessagesContainer: document.getElementById("chatMessagesContainer"),
+      clearChatBtn: document.getElementById("clearChatBtn"),
+
+      // Onboarding Elements
       onboardingModal: document.getElementById("onboardingModal"),
       onboardingGrid: document.getElementById("onboardingGrid"),
       saveOnboardingBtn: document.getElementById("saveOnboardingBtn"),
       skipOnboardingBtn: document.getElementById("skipOnboardingBtn"),
       openOnboardingBtn: document.getElementById("openOnboardingBtn"),
-      
-      voiceModal: document.getElementById("voiceModal"),
-      closeVoiceBtn: document.getElementById("closeVoiceBtn"),
-      micDockBtn: document.getElementById("micDockBtn"),
-      voiceWave: document.getElementById("voiceWave"),
-      voiceStatusText: document.getElementById("voiceStatusText"),
-      voiceInputText: document.getElementById("voiceInputText"),
-      voiceSendBtn: document.getElementById("voiceSendBtn"),
-      voiceResponseCard: document.getElementById("voiceResponseCard"),
-      voiceResponseText: document.getElementById("voiceResponseText"),
-      voiceListenToggleBtn: document.getElementById("voiceListenToggleBtn")
+      closeOnboardingBtn: document.getElementById("closeOnboardingBtn"),
+      personaSettingsDockBtn: document.getElementById("personaSettingsDockBtn"),
+
+      // Radar Elements
+      radarModal: document.getElementById("radarModal"),
+      closeRadarBtn: document.getElementById("closeRadarBtn"),
+      radarDockBtn: document.getElementById("radarDockBtn"),
+      radarPlayToggle: document.getElementById("radarPlayToggle")
     };
+  }
+
+  startClock() {
+    const updateTime = () => {
+      const now = this.simulatedTime || new Date();
+      const hours = String(now.getHours()).padStart(2, "0");
+      const mins = String(now.getMinutes()).padStart(2, "0");
+      if (this.el.statusBarClock) {
+        this.el.statusBarClock.textContent = `${hours}:${mins}`;
+      }
+    };
+    updateTime();
+    setInterval(updateTime, 30000);
   }
 
   initVoiceEngine() {
@@ -86,21 +116,22 @@ class MausamApp {
       onStateChange: (state) => {
         if (state.listening) {
           this.el.voiceWave.classList.add("active");
-          this.el.voiceStatusText.textContent = "Listening... बोलिए, मैं सुन रहा हूँ...";
+          this.el.voiceListenToggleBtn.classList.add("listening");
           this.el.micDockBtn.classList.add("listening");
+          if (this.el.islandStatusPill) {
+            this.el.islandStatusPill.innerHTML = `<i class="fa-solid fa-microphone" style="color: #ef4444;"></i> Listening...`;
+          }
         } else {
           this.el.voiceWave.classList.remove("active");
+          this.el.voiceListenToggleBtn.classList.remove("listening");
           this.el.micDockBtn.classList.remove("listening");
-          if (state.error) {
-            this.el.voiceStatusText.textContent = `Mic status: ${state.error}. You can also type below!`;
-          } else {
-            this.el.voiceStatusText.textContent = "Tap mic to speak or select a sample question:";
+          if (this.el.islandStatusPill) {
+            this.el.islandStatusPill.innerHTML = `<i class="fa-solid fa-cloud-sun"></i> IMD`;
           }
         }
 
         if (state.transcript) {
-          this.el.voiceInputText.value = state.transcript;
-          this.handleVoiceSubmit(state.transcript);
+          this.submitChatMessage(state.transcript);
         }
       }
     });
@@ -144,41 +175,59 @@ class MausamApp {
       this.el.moreInsightsChevron.style.transform = isOpen ? "rotate(180deg)" : "rotate(0deg)";
     });
 
-    // Voice Modal Controls
-    this.el.micDockBtn?.addEventListener("click", () => this.openVoiceModal());
+    // Conversational Voice / Chat Modal Controls
+    this.el.micDockBtn?.addEventListener("click", () => this.openVoiceModal(true));
     this.el.closeVoiceBtn?.addEventListener("click", () => this.closeVoiceModal());
+    this.el.voiceListenToggleBtn?.addEventListener("click", () => {
+      this.voiceEngine.startListening();
+    });
     this.el.voiceSendBtn?.addEventListener("click", () => {
       const text = this.el.voiceInputText.value.trim();
-      if (text) this.handleVoiceSubmit(text);
+      if (text) {
+        this.submitChatMessage(text);
+        this.el.voiceInputText.value = "";
+      }
     });
     this.el.voiceInputText?.addEventListener("keypress", (e) => {
       if (e.key === "Enter") {
         const text = this.el.voiceInputText.value.trim();
-        if (text) this.handleVoiceSubmit(text);
+        if (text) {
+          this.submitChatMessage(text);
+          this.el.voiceInputText.value = "";
+        }
       }
     });
-    this.el.voiceListenToggleBtn?.addEventListener("click", () => {
-      this.voiceEngine.startListening();
-    });
+    this.el.clearChatBtn?.addEventListener("click", () => this.clearChatHistory());
 
-    // Prompt Chips inside Voice Modal
-    document.querySelectorAll(".prompt-chip").forEach(chip => {
+    // Prompt Chips inside Chat Modal
+    document.querySelectorAll(".chat-prompt-pill").forEach(chip => {
       chip.addEventListener("click", () => {
         const query = chip.dataset.query || chip.textContent;
-        this.el.voiceInputText.value = query;
-        this.handleVoiceSubmit(query);
+        this.submitChatMessage(query);
       });
     });
 
     // Onboarding Modal Controls
     this.el.openOnboardingBtn?.addEventListener("click", () => this.openOnboardingModal());
+    this.el.personaSettingsDockBtn?.addEventListener("click", () => this.openOnboardingModal());
+    this.el.closeOnboardingBtn?.addEventListener("click", () => this.el.onboardingModal.classList.remove("active"));
     this.el.saveOnboardingBtn?.addEventListener("click", () => this.saveOnboarding());
     this.el.skipOnboardingBtn?.addEventListener("click", () => {
       this.el.onboardingModal.classList.remove("active");
     });
 
+    // Doppler Radar Modal Controls
+    this.el.radarDockBtn?.addEventListener("click", () => this.openRadarModal());
+    this.el.closeRadarBtn?.addEventListener("click", () => this.closeRadarModal());
+    this.el.radarPlayToggle?.addEventListener("click", () => {
+      const isPaused = this.el.radarPlayToggle.classList.toggle("paused");
+      this.el.radarPlayToggle.innerHTML = isPaused 
+        ? `<i class="fa-solid fa-play"></i> Play Loop`
+        : `<i class="fa-solid fa-pause"></i> Pause Loop`;
+    });
+
     // Network Change Custom Event
-    window.addEventListener("mausam_network_change", (e) => {
+    window.addEventListener("mausam_network_change", () => {
       this.updateNetworkBadge();
     });
   }
@@ -214,7 +263,7 @@ class MausamApp {
     this.renderAlerts();
     this.renderWidgets();
 
-    // Check first-time onboarding
+    // First time onboarding check
     if (!localStorage.getItem("mausam_onboarding_completed")) {
       this.openOnboardingModal();
     }
@@ -231,7 +280,6 @@ class MausamApp {
   }
 
   cycleContextSimulation() {
-    // Demonstration tool for hackathon judges: shifts time & severe scenario
     const states = [
       { name: "Early Morning (6 AM) · Fitness & Run Focus", hour: 6 },
       { name: "Morning Commute (8:30 AM) · Traffic & Rain Rush", hour: 9 },
@@ -252,13 +300,13 @@ class MausamApp {
     this.simulatedTime = simulatedDate;
 
     this.el.simTimeBtn.innerHTML = `<i class="fa-solid fa-clock-rotate-left"></i> ${nextState.name}`;
+    this.startClock();
     this.loadApplication();
   }
 
   renderPersonaPills() {
     this.el.personaPillsContainer.innerHTML = "";
 
-    // Show selected personas first, then others
     const allPersonaKeys = Object.keys(PERSONA_DEFINITIONS);
     allPersonaKeys.forEach(pKey => {
       const pDef = PERSONA_DEFINITIONS[pKey];
@@ -281,9 +329,6 @@ class MausamApp {
 
   renderContextBadge() {
     const reason = this.contextInference.primaryReason;
-    const topContextPersona = this.contextInference.topPersona;
-    const personaTitle = PERSONA_DEFINITIONS[topContextPersona]?.title.split("/")[0] || topContextPersona;
-
     this.el.contextText.innerHTML = `<span><strong>Context Engine:</strong> ${reason}</span>`;
   }
 
@@ -292,7 +337,6 @@ class MausamApp {
     const scoreData = this.comfortScores[this.activePersona];
     const weather = this.currentWeatherData.weather;
 
-    // Set Hero card theme gradient
     const gradientMap = {
       runner: "linear-gradient(135deg, #ea580c, #c2410c)",
       farmer: "linear-gradient(135deg, #059669, #047857)",
@@ -306,7 +350,6 @@ class MausamApp {
 
     this.el.heroPersonaCard.style.background = gradientMap[this.activePersona] || gradientMap.runner;
 
-    // Greeting
     const hour = (this.simulatedTime || new Date()).getHours();
     let timeGreeting = "Good morning";
     if (hour >= 12 && hour < 17) timeGreeting = "Good afternoon";
@@ -320,15 +363,30 @@ class MausamApp {
       </div>
     `;
 
-    // Compound Comfort Index Score
     this.el.heroScoreLabel.textContent = pDef.scoreLabel;
-    this.el.heroScoreVal.innerHTML = `${scoreData.score}<span class="denom">/100</span>`;
+    this.animateScoreCount(scoreData.score);
     this.el.heroScoreBadge.textContent = scoreData.badge;
     this.el.heroVerdict.textContent = scoreData.verdict;
     this.el.heroSubtext.textContent = scoreData.subtext;
 
-    // Quick Metrics Strip based on Persona
     this.renderHeroMetrics(this.activePersona, weather);
+  }
+
+  animateScoreCount(targetScore) {
+    let current = 0;
+    const duration = 400; // ms
+    const stepTime = 20;
+    const totalSteps = duration / stepTime;
+    const increment = Math.ceil(targetScore / totalSteps);
+
+    const timer = setInterval(() => {
+      current += increment;
+      if (current >= targetScore) {
+        current = targetScore;
+        clearInterval(timer);
+      }
+      this.el.heroScoreVal.innerHTML = `${current}<span class="denom">/100</span>`;
+    }, stepTime);
   }
 
   renderHeroMetrics(persona, weather) {
@@ -355,7 +413,7 @@ class MausamApp {
       metricsHtml = `
         <div class="quick-metric-item"><span class="lbl">Next Tide</span><span class="val">${weather.tides ? weather.tides.highTide : 'Inland'}</span></div>
         <div class="quick-metric-item"><span class="lbl">Wave Swell</span><span class="val">${weather.tides ? weather.tides.waveHeight : 'N/A'}</span></div>
-        <div class="quick-metric-item"><span class="lbl">Water Safety</span><span class="val">${weather.tides ? 'Safe with Caution' : 'N/A'}</span></div>
+        <div class="quick-metric-item"><span class="lbl">Water Safety</span><span class="val">${weather.tides ? 'Caution at Tide' : 'N/A'}</span></div>
       `;
     } else {
       metricsHtml = `
@@ -411,14 +469,12 @@ class MausamApp {
       pDef
     );
 
-    // Render Featured Cards (Top 4-5)
     this.el.featuredWidgetsContainer.innerHTML = "";
     featured.forEach(w => {
       const widgetNode = this.buildWidgetElement(w.id);
       if (widgetNode) this.el.featuredWidgetsContainer.appendChild(widgetNode);
     });
 
-    // Render Secondary Cards ("More Insights")
     this.el.secondaryWidgetsContainer.innerHTML = "";
     secondary.forEach(w => {
       const widgetNode = this.buildWidgetElement(w.id);
@@ -430,7 +486,6 @@ class MausamApp {
 
   buildWidgetElement(widgetId) {
     const weather = this.currentWeatherData.weather;
-    const location = this.currentWeatherData;
     const card = document.createElement("div");
     card.className = "app-widget-card";
     card.id = `widget_${widgetId}`;
@@ -480,7 +535,7 @@ class MausamApp {
       case "gkms_advisory":
         card.innerHTML = `
           <div class="widget-card-header">
-            <div class="widget-card-title"><i class="fa-solid fa-building-wheat" style="color: #10b981;"></i> Gramin Krishi Mausam Sewa (GKMS)</div>
+            <div class="widget-card-title"><i class="fa-solid fa-seedling" style="color: #10b981;"></i> Gramin Krishi Mausam Sewa (GKMS)</div>
             <span class="gkms-badge-pill"><i class="fa-solid fa-check"></i> IMD Agromet</span>
           </div>
           <div class="gkms-advisory-quote">
@@ -622,7 +677,6 @@ class MausamApp {
       el.style.boxShadow = "0 0 0 3px #2563eb";
       setTimeout(() => { el.style.boxShadow = ""; }, 2000);
     } else {
-      // If it's in secondary, open it first
       this.el.secondaryWidgetsContainer.classList.add("open");
       setTimeout(() => {
         const secEl = document.getElementById(`widget_${widgetId}`);
@@ -631,42 +685,204 @@ class MausamApp {
     }
   }
 
-  // Voice Assistant Dialog
-  openVoiceModal() {
+  // ==========================================================================
+  // CONVERSATIONAL CHAT ASSISTANT LOGIC (Full History Stream)
+  // ==========================================================================
+  loadChatHistory() {
+    try {
+      const data = localStorage.getItem(this.chatStorageKey);
+      if (data) {
+        return JSON.parse(data);
+      }
+    } catch (e) {
+      console.warn("Could not load chat history", e);
+    }
+
+    // Default welcoming message
+    return [
+      {
+        id: "msg_welcome",
+        sender: "assistant",
+        text: "नमस्ते! I am Mausam AI, your personalized weather assistant. I calculate real-time Comfort Scores (Run Score, Agro Spraying Window, Beach Tides, Commute Friction). Ask me anything in English or हिन्दी!",
+        timestamp: "Just now",
+        personaTag: "Mausam AI",
+        widgetTarget: null
+      }
+    ];
+  }
+
+  saveChatHistory() {
+    try {
+      localStorage.setItem(this.chatStorageKey, JSON.stringify(this.chatMessages));
+    } catch (e) {
+      console.warn("Could not save chat history", e);
+    }
+  }
+
+  clearChatHistory() {
+    this.chatMessages = [
+      {
+        id: `msg_${Date.now()}`,
+        sender: "assistant",
+        text: "Chat history cleared. How can I help you with today's weather?",
+        timestamp: "Just now",
+        personaTag: "Mausam AI",
+        widgetTarget: null
+      }
+    ];
+    this.saveChatHistory();
+    this.renderChatHistory();
+  }
+
+  renderChatHistory() {
+    if (!this.el.chatMessagesContainer) return;
+    this.el.chatMessagesContainer.innerHTML = "";
+
+    this.chatMessages.forEach(msg => {
+      const row = document.createElement("div");
+      row.className = `chat-message-row ${msg.sender}`;
+
+      const avatar = document.createElement("div");
+      avatar.className = "chat-bubble-avatar";
+      avatar.innerHTML = msg.sender === "user" 
+        ? `<i class="fa-solid fa-user"></i>` 
+        : `<i class="fa-solid fa-robot"></i>`;
+
+      const content = document.createElement("div");
+      content.className = "chat-bubble-content";
+
+      const bubble = document.createElement("div");
+      bubble.className = "chat-bubble";
+      bubble.textContent = msg.text;
+
+      // Action button if assistant suggested a persona or widget
+      if (msg.sender === "assistant" && msg.widgetTarget) {
+        const actionBtn = document.createElement("button");
+        actionBtn.className = "chat-action-btn";
+        actionBtn.innerHTML = `<i class="fa-solid fa-arrow-up-right-from-square"></i> View ${msg.personaTag || 'Widget'}`;
+        actionBtn.addEventListener("click", () => {
+          this.closeVoiceModal();
+          if (msg.persona) {
+            this.activePersona = msg.persona;
+            this.renderPersonaPills();
+            this.renderHeroSection();
+            this.renderAlerts();
+            this.renderWidgets();
+          }
+          if (msg.widgetTarget) {
+            setTimeout(() => this.scrollToWidget(msg.widgetTarget), 350);
+          }
+        });
+        bubble.appendChild(document.createElement("br"));
+        bubble.appendChild(actionBtn);
+      }
+
+      const meta = document.createElement("div");
+      meta.className = "chat-meta-bar";
+      meta.innerHTML = `<span>${msg.timestamp}</span>`;
+
+      if (msg.sender === "assistant") {
+        const speakBtn = document.createElement("button");
+        speakBtn.className = "chat-speak-btn";
+        speakBtn.innerHTML = `<i class="fa-solid fa-volume-high"></i> Listen`;
+        speakBtn.addEventListener("click", () => {
+          this.voiceEngine.speak(msg.text, msg.isHindi ? "hi-IN" : "en-IN");
+        });
+        meta.appendChild(speakBtn);
+      }
+
+      content.appendChild(bubble);
+      content.appendChild(meta);
+
+      row.appendChild(avatar);
+      row.appendChild(content);
+
+      this.el.chatMessagesContainer.appendChild(row);
+    });
+
+    // Auto-scroll to latest
+    this.el.chatMessagesContainer.scrollTop = this.el.chatMessagesContainer.scrollHeight;
+  }
+
+  submitChatMessage(userQuery) {
+    if (!userQuery || !userQuery.trim()) return;
+    const query = userQuery.trim();
+
+    const now = new Date();
+    const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+    // 1. Add User Message
+    this.chatMessages.push({
+      id: `user_${Date.now()}`,
+      sender: "user",
+      text: query,
+      timestamp: timeStr
+    });
+    this.saveChatHistory();
+    this.renderChatHistory();
+
+    // 2. Render Typing Indicator
+    const typingRow = document.createElement("div");
+    typingRow.className = "chat-message-row assistant";
+    typingRow.id = "chatTypingIndicator";
+    typingRow.innerHTML = `
+      <div class="chat-bubble-avatar"><i class="fa-solid fa-robot"></i></div>
+      <div class="chat-bubble-content">
+        <div class="chat-bubble" style="padding: 8px 12px;">
+          <div class="typing-dots">
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+          </div>
+        </div>
+      </div>
+    `;
+    this.el.chatMessagesContainer.appendChild(typingRow);
+    this.el.chatMessagesContainer.scrollTop = this.el.chatMessagesContainer.scrollHeight;
+
+    // 3. Process Query through NLP Voice Engine
+    setTimeout(() => {
+      const result = this.voiceEngine.processQuery(
+        query,
+        this.currentWeatherData,
+        this.comfortScores
+      );
+
+      // Remove typing indicator
+      const ind = document.getElementById("chatTypingIndicator");
+      if (ind) ind.remove();
+
+      // Add Assistant Message
+      this.chatMessages.push({
+        id: `asst_${Date.now()}`,
+        sender: "assistant",
+        text: result.answer,
+        timestamp: timeStr,
+        personaTag: PERSONA_DEFINITIONS[result.persona]?.title || result.persona,
+        persona: result.persona,
+        widgetTarget: result.widgetId,
+        isHindi: result.isHindi
+      });
+
+      this.saveChatHistory();
+      this.renderChatHistory();
+
+      // Automatically speak the response
+      this.voiceEngine.speak(result.answer, result.isHindi ? "hi-IN" : "en-IN");
+    }, 450);
+  }
+
+  openVoiceModal(startMic = false) {
     this.el.voiceModal.classList.add("active");
-    this.el.voiceResponseCard.style.display = "none";
-    this.el.voiceInputText.value = "";
-    this.voiceEngine.startListening();
+    this.renderChatHistory();
+    if (startMic) {
+      setTimeout(() => this.voiceEngine.startListening(), 300);
+    }
   }
 
   closeVoiceModal() {
     this.voiceEngine.stopListening();
     this.el.voiceModal.classList.remove("active");
-  }
-
-  handleVoiceSubmit(query) {
-    const result = this.voiceEngine.processQuery(
-      query,
-      this.currentWeatherData,
-      this.comfortScores
-    );
-
-    this.el.voiceResponseCard.style.display = "block";
-    this.el.voiceResponseText.textContent = result.answer;
-
-    // Speak response using SpeechSynthesis
-    this.voiceEngine.speak(result.answer, result.isHindi ? "hi-IN" : "en-IN");
-
-    // Automatically switch persona or highlight widget if relevant
-    if (result.persona && result.persona !== this.activePersona) {
-      setTimeout(() => {
-        this.activePersona = result.persona;
-        this.renderPersonaPills();
-        this.renderHeroSection();
-        this.renderAlerts();
-        this.renderWidgets();
-      }, 1500);
-    }
   }
 
   // Onboarding Persona Multi-select
@@ -712,6 +928,15 @@ class MausamApp {
     this.activePersona = this.userPersonas[0] || "runner";
     this.el.onboardingModal.classList.remove("active");
     this.loadApplication();
+  }
+
+  // Doppler Radar Modal
+  openRadarModal() {
+    this.el.radarModal.classList.add("active");
+  }
+
+  closeRadarModal() {
+    this.el.radarModal.classList.remove("active");
   }
 }
 

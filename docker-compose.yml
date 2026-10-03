@@ -1,0 +1,74 @@
+# ==============================================================================
+# DOCKER COMPOSE CONFIGURATION: MAUSAM FULL-STACK MICROSERVICES
+# Smart India Hackathon 2026 - Problem Statement SIH26076 (Byte Force 02)
+# ==============================================================================
+version: "3.8"
+
+services:
+  # 1. Responsive Frontend PWA (Leaflet + OpenStreetMap + Web Speech API)
+  frontend:
+    image: nginx:alpine
+    container_name: mausam-frontend
+    ports:
+      - "8080:80"
+    volumes:
+      - ./:/usr/share/nginx/html:ro
+    depends_on:
+      - backend-api
+
+  # 2. Node.js REST API Microservice (OTP, JWT, FCM Priority Queue, Aggregator)
+  backend-api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: mausam-backend-api
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=postgresql://mausam_admin:sih2026@postgres:5432/mausam_db
+      - JWT_SECRET=sih2026_mausam_byteforce02_secure_secret_key
+    depends_on:
+      - postgres
+      - redis
+      - ml-engine
+
+  # 3. Python AI/ML Scoring & Adaptive Ranking Microservice
+  ml-engine:
+    build:
+      context: ./ml_service
+      dockerfile: Dockerfile
+    container_name: mausam-ml-engine
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+
+  # 4. PostgreSQL Relational Database & PostGIS Spatial Extension
+  postgres:
+    image: postgis/postgis:16-3.4-alpine
+    container_name: mausam-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=mausam_admin
+      - POSTGRES_PASSWORD=sih2026
+      - POSTGRES_DB=mausam_db
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
+      - ./database/seed.sql:/docker-entrypoint-initdb.d/2-seed.sql
+
+  # 5. Redis In-Memory Distributed Cache
+  redis:
+    image: redis:7-alpine
+    container_name: mausam-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+
+volumes:
+  pgdata:
+  redisdata:

@@ -114,10 +114,12 @@ class MausamApp {
   initVoiceEngine() {
     this.voiceEngine = new VoiceQueryEngine({
       onStateChange: (state) => {
+        const waveText = document.getElementById("waveStatusText");
         if (state.listening) {
           this.el.voiceWave.classList.add("active");
           this.el.voiceListenToggleBtn.classList.add("listening");
           this.el.micDockBtn.classList.add("listening");
+          if (waveText) waveText.textContent = state.message || "Listening... बोलिए";
           if (this.el.islandStatusPill) {
             this.el.islandStatusPill.innerHTML = `<i class="fa-solid fa-microphone" style="color: #ef4444;"></i> Listening...`;
           }
@@ -127,6 +129,9 @@ class MausamApp {
           this.el.micDockBtn.classList.remove("listening");
           if (this.el.islandStatusPill) {
             this.el.islandStatusPill.innerHTML = `<i class="fa-solid fa-cloud-sun"></i> IMD`;
+          }
+          if (state.error && state.message) {
+            this.showChatNotice(state.message);
           }
         }
 
@@ -178,8 +183,12 @@ class MausamApp {
     // Conversational Voice / Chat Modal Controls
     this.el.micDockBtn?.addEventListener("click", () => this.openVoiceModal(true));
     this.el.closeVoiceBtn?.addEventListener("click", () => this.closeVoiceModal());
-    this.el.voiceListenToggleBtn?.addEventListener("click", () => {
-      this.voiceEngine.startListening();
+    this.el.voiceListenToggleBtn?.addEventListener("click", async () => {
+      if (this.voiceEngine.isListening) {
+        this.voiceEngine.stopListening();
+      } else {
+        await this.voiceEngine.startListening();
+      }
     });
     this.el.voiceSendBtn?.addEventListener("click", () => {
       const text = this.el.voiceInputText.value.trim();
@@ -703,7 +712,7 @@ class MausamApp {
       {
         id: "msg_welcome",
         sender: "assistant",
-        text: "नमस्ते! I am Mausam AI, your personalized weather assistant. I calculate real-time Comfort Scores (Run Score, Agro Spraying Window, Beach Tides, Commute Friction). Ask me anything in English or हिन्दी!",
+        text: "🙏 **नमस्ते! Welcome to Mausam AI (मौसम बोल)**\n\nI am your personalized meteorologist & agro-advisor grounded in real-time IMD radars, CPCB air quality sensors, and Gramin Krishi Mausam Sewa (GKMS) advisories.\n\n• **Fitness & Running:** Compound score, optimal run hours & air safety\n• **Agro & Farmers:** Safe spraying windows, frost & soil moisture\n• **Transit & Commute:** Rain onset timing & waterlogging hotspots\n• **Coastal & Beach:** INCOIS tide schedule & wave swells\n\nTap the microphone to speak, or ask me anything in English or हिन्दी!",
         timestamp: "Just now",
         personaTag: "Mausam AI",
         widgetTarget: null
@@ -724,7 +733,7 @@ class MausamApp {
       {
         id: `msg_${Date.now()}`,
         sender: "assistant",
-        text: "Chat history cleared. How can I help you with today's weather?",
+        text: "🙏 Chat history cleared! How can I help you with today's weather, running, or crop spraying?",
         timestamp: "Just now",
         personaTag: "Mausam AI",
         widgetTarget: null
@@ -732,6 +741,37 @@ class MausamApp {
     ];
     this.saveChatHistory();
     this.renderChatHistory();
+  }
+
+  formatMarkdown(text) {
+    if (!text) return "";
+    let escaped = text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+    
+    // Bold **text**
+    escaped = escaped.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    
+    // Italic *text*
+    escaped = escaped.replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+    // Bullet lines •
+    escaped = escaped.replace(/^• (.*)$/gm, '<li style="margin-left: 12px; margin-bottom: 3px; list-style-type: disc;">$1</li>');
+    
+    // Newlines
+    escaped = escaped.replace(/\n/g, '<br>');
+    escaped = escaped.replace(/<br><li/g, '<li').replace(/<\/li><br>/g, '</li>');
+    
+    return escaped;
+  }
+
+  showChatNotice(noticeText) {
+    const row = document.createElement("div");
+    row.className = "chat-notice-banner";
+    row.innerHTML = `<i class="fa-solid fa-circle-info"></i> <span>${noticeText}</span>`;
+    this.el.chatMessagesContainer?.appendChild(row);
+    this.el.chatMessagesContainer.scrollTop = this.el.chatMessagesContainer.scrollHeight;
   }
 
   renderChatHistory() {
@@ -753,7 +793,7 @@ class MausamApp {
 
       const bubble = document.createElement("div");
       bubble.className = "chat-bubble";
-      bubble.textContent = msg.text;
+      bubble.innerHTML = this.formatMarkdown(msg.text);
 
       // Action button if assistant suggested a persona or widget
       if (msg.sender === "assistant" && msg.widgetTarget) {
@@ -876,7 +916,13 @@ class MausamApp {
     this.el.voiceModal.classList.add("active");
     this.renderChatHistory();
     if (startMic) {
-      setTimeout(() => this.voiceEngine.startListening(), 300);
+      setTimeout(async () => {
+        try {
+          await this.voiceEngine.startListening();
+        } catch (e) {
+          console.warn("Could not start listening automatically:", e);
+        }
+      }, 350);
     }
   }
 

@@ -11,6 +11,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   
+  <!-- Leaflet Interactive Maps (OpenStreetMap Doppler Radar) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
   <!-- Stylesheet -->
   <link rel="stylesheet" href="css/style.css">
 </head>
@@ -41,14 +45,10 @@
   <main class="device-container" id="deviceContainer">
     <div class="device-frame">
       
-      <!-- Phone Hardware Mockup Bar -->
+      <!-- Phone Hardware Mockup Bar (No Notch) -->
       <div class="phone-status-bar">
         <span id="statusBarClock">09:41</span>
-        <div class="phone-island" id="dynamicIsland">
-          <div class="island-camera"></div>
-          <div class="island-sensor"></div>
-          <span class="island-status-pill" id="islandStatusPill"><i class="fa-solid fa-cloud-sun"></i> IMD</span>
-        </div>
+        <span class="status-center-badge"><i class="fa-solid fa-satellite-dish"></i> IMD DWR Live</span>
         <div style="display: flex; align-items: center; gap: 6px;">
           <i class="fa-solid fa-signal" style="font-size: 0.7rem;"></i>
           <i class="fa-solid fa-wifi" style="font-size: 0.7rem;"></i>
@@ -102,7 +102,7 @@
           </div>
         </div>
 
-        <!-- Context Inference Engine Badge (Slide 2 & 3) -->
+        <!-- Context Inference Engine Badge -->
         <div class="context-insight-chip" id="contextChip">
           <div class="insight-text" id="contextText">
             <i class="fa-solid fa-wand-magic-sparkles"></i>
@@ -111,12 +111,12 @@
           <span class="persona-auto-tag">Auto-Tuned</span>
         </div>
 
-        <!-- Horizontal Persona Switcher Pills (Slide 6 Prototype Mockup) -->
+        <!-- Horizontal Persona Switcher Pills -->
         <nav class="persona-pills-wrapper" id="personaPillsContainer">
           <!-- Dynamically populated -->
         </nav>
 
-        <!-- HERO PERSONA CARD (Slide 6 System Prototype Window) -->
+        <!-- HERO PERSONA CARD -->
         <section class="hero-persona-card" id="heroPersonaCard">
           <div class="hero-greeting" id="heroGreeting">
             <span>Good morning, Runner</span>
@@ -150,12 +150,12 @@
           </div>
         </section>
 
-        <!-- PRIORITY ALERTS AREA (Slide 2 & 4: Urgency-Ranked, avoids alert fatigue) -->
+        <!-- PRIORITY ALERTS AREA -->
         <section class="priority-alerts-area" id="priorityAlertsArea">
           <!-- Dynamically populated -->
         </section>
 
-        <!-- MODULAR ADAPTIVE WIDGET GRID (Slide 2 & 3: Top 4-5 hero widgets) -->
+        <!-- MODULAR ADAPTIVE WIDGET GRID -->
         <div class="section-headline">
           <h3><i class="fa-solid fa-layer-group" style="color: #2563eb;"></i> Persona Insights</h3>
           <span class="ranking-indicator">Adaptive Ranking Active</span>
@@ -165,7 +165,7 @@
           <!-- Top 4-5 dynamically ranked widgets rendered here -->
         </section>
 
-        <!-- MORE INSIGHTS (Slide 4 Strategy: Prevents Clutter) -->
+        <!-- MORE INSIGHTS DRAWER -->
         <div class="more-insights-wrapper">
           <button class="more-insights-toggle" id="moreInsightsToggle">
             <span><i class="fa-solid fa-ellipsis"></i> View More Insights (<span id="moreInsightsCount">0</span>)</span>
@@ -202,8 +202,8 @@
       </footer>
 
       <!-- ==========================================================================
-           MODAL 1: FULL CONVERSATIONAL VOICE ASSISTANT ("मौसम बोल" / Mausam Bol)
-           With Persistent Chat History, Audio Replay & Persona Action Cards
+           MODAL 1: CONVERSATIONAL VOICE ASSISTANT ("मौसम बोल" / Mausam Bol)
+           With Persistent Chat History, Form Submission & Bilingual Intelligence
            ========================================================================== -->
       <div class="modal-overlay" id="voiceModal">
         <div class="modal-sheet chat-modal-sheet">
@@ -253,26 +253,27 @@
               <button class="chat-prompt-pill" data-query="क्या आज फसल में कीटनाशक छिड़क सकते हैं?">🌾 क्या आज कीटनाशक छिड़कें?</button>
               <button class="chat-prompt-pill" data-query="Will it rain during evening commute?">🚗 Rain during commute?</button>
               <button class="chat-prompt-pill" data-query="Is today good for the beach and swimming?">🏖️ Beach & tide condition?</button>
+              <button class="chat-prompt-pill" data-query="What does Doppler Radar do in this app?">📡 What does Doppler Radar do?</button>
               <button class="chat-prompt-pill" data-query="What is the air quality and PM2.5?">🩺 AQI & mask advice?</button>
               <button class="chat-prompt-pill" data-query="आज का मौसम कैसा रहेगा?">🌤️ आज का मौसम कैसा रहेगा?</button>
             </div>
           </div>
 
-          <!-- Chat Input Bar -->
-          <div class="chat-input-bar">
-            <button id="voiceListenToggleBtn" class="chat-mic-btn" title="Tap to Speak">
+          <!-- Chat Input Bar (Form Submission) -->
+          <form id="chatForm" class="chat-input-bar">
+            <button type="button" id="voiceListenToggleBtn" class="chat-mic-btn" title="Tap to Speak (Mausam Bol)">
               <i class="fa-solid fa-microphone"></i>
             </button>
-            <input type="text" id="voiceInputText" placeholder="Ask in English or हिन्दी (e.g. Can I run today?)..." autocomplete="off">
-            <button id="voiceSendBtn" class="chat-send-btn" title="Send Question">
+            <input type="text" id="voiceInputText" placeholder="Ask in English or हिन्दी (e.g. Can I run today?)..." autocomplete="off" required>
+            <button type="submit" id="voiceSendBtn" class="chat-send-btn" title="Send Question">
               <i class="fa-solid fa-paper-plane"></i>
             </button>
-          </div>
+          </form>
         </div>
       </div>
 
       <!-- ==========================================================================
-           MODAL 2: ONBOARDING PERSONA PICKER (Slide 2 & 4)
+           MODAL 2: ONBOARDING PERSONA PICKER
            ========================================================================== -->
       <div class="modal-overlay" id="onboardingModal">
         <div class="modal-sheet">
@@ -299,38 +300,100 @@
       </div>
 
       <!-- ==========================================================================
-           MODAL 3: DOPPLER WEATHER RADAR & CLOUD SATELLITE (IMD Live Viewer)
+           MODAL 3: DOPPLER WEATHER RADAR (Leaflet + OpenStreetMap Interactive Viewer)
            ========================================================================== -->
       <div class="modal-overlay" id="radarModal">
         <div class="modal-sheet radar-modal-sheet">
           <div class="modal-drag-handle"></div>
+          
           <div class="modal-header-title">
-            <h2><i class="fa-solid fa-satellite-dish" style="color: #2563eb;"></i> IMD Doppler Radar & Satellite</h2>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <div style="width: 32px; height: 32px; border-radius: 8px; background: #eff6ff; color: #2563eb; display: flex; align-items: center; justify-content: center; font-size: 1rem;">
+                <i class="fa-solid fa-satellite-dish"></i>
+              </div>
+              <div>
+                <h2 style="font-size: 1rem; font-weight: 800; color: #0f172a;">IMD Doppler Weather Radar (DWR)</h2>
+                <span style="font-size: 0.7rem; color: #64748b; font-weight: 600;">Leaflet + OpenStreetMap · 0–3 Hour Nowcasting</span>
+              </div>
+            </div>
             <button class="modal-close-btn" id="closeRadarBtn">&times;</button>
           </div>
-          <div class="radar-preview-box">
-            <div class="radar-map-canvas" id="radarCanvas">
-              <div class="radar-sweep-beam"></div>
-              <div class="radar-storm-cluster cluster-1"></div>
-              <div class="radar-storm-cluster cluster-2"></div>
-              <div class="radar-storm-cluster cluster-3"></div>
-              <div class="radar-crosshair"></div>
-              <div class="radar-city-marker marker-delhi" title="Delhi">Delhi</div>
-              <div class="radar-city-marker marker-mumbai" title="Mumbai">Mumbai</div>
-              <div class="radar-city-marker marker-ludhiana" title="Ludhiana">Ludhiana</div>
-              <div class="radar-city-marker marker-bengaluru" title="Bengaluru">Bengaluru</div>
-              <div class="radar-timestamp-overlay" id="radarTimestamp">Live Doppler Loop · Refl: Max 48 dBZ</div>
-            </div>
-            <div class="radar-legend">
-              <span>Light Rain</span>
-              <div class="legend-gradient"></div>
-              <span>Severe Storm</span>
+
+          <!-- Radar Station Quick Selector Strip -->
+          <div class="radar-station-strip">
+            <span class="station-label"><i class="fa-solid fa-tower-broadcast"></i> Stations:</span>
+            <div class="station-pills-scroll" id="radarStationScroll">
+              <button class="station-pill active" data-station="delhi" data-lat="28.589" data-lon="77.222" data-name="Delhi (Safdarjung S-Band)">Delhi (S-Band)</button>
+              <button class="station-pill" data-station="mumbai" data-lat="18.907" data-lon="72.815" data-name="Mumbai (Colaba S-Band)">Mumbai (Colaba)</button>
+              <button class="station-pill" data-station="kolkata" data-lat="22.533" data-lon="88.328" data-name="Kolkata (Alipore S-Band)">Kolkata</button>
+              <button class="station-pill" data-station="chennai" data-lat="13.082" data-lon="80.293" data-name="Chennai (Port S-Band)">Chennai</button>
+              <button class="station-pill" data-station="bengaluru" data-lat="13.076" data-lon="77.575" data-name="Bengaluru (GKVK C-Band)">Bengaluru</button>
+              <button class="station-pill" data-station="shimla" data-lat="31.097" data-lon="77.267" data-name="Shimla (Kufri X-Band)">Shimla (Hill)</button>
+              <button class="station-pill" data-station="ludhiana" data-lat="30.901" data-lon="75.857" data-name="Ludhiana (PAU C-Band)">Ludhiana</button>
+              <button class="station-pill" data-station="patna" data-lat="25.594" data-lon="85.137" data-name="Patna (Bariatu C-Band)">Patna</button>
             </div>
           </div>
-          <div class="radar-controls-strip">
-            <button class="radar-play-btn" id="radarPlayToggle"><i class="fa-solid fa-pause"></i> Pause Loop</button>
-            <span style="font-size: 0.72rem; color: #64748b;">Source: IMD Radar Network & INSAT-3DR</span>
+
+          <!-- Live Nowcast Alert Banner -->
+          <div class="radar-nowcast-banner" id="radarNowcastBanner">
+            <i class="fa-solid fa-bolt nowcast-icon"></i>
+            <div class="nowcast-content" id="radarNowcastText">
+              <strong>Delhi Radar Cell:</strong> Moderate convective echo detected 22 km SW moving NE at 28 km/h. Light-to-moderate showers expected in NCR within 35 minutes.
+            </div>
           </div>
+
+          <!-- Interactive Leaflet + OpenStreetMap Map Container -->
+          <div class="radar-preview-box" style="position: relative; padding: 0; overflow: hidden; height: 300px; border-radius: 16px;">
+            <div id="radarLeafletMap" style="width: 100%; height: 100%; z-index: 1;"></div>
+            
+            <!-- Radar Range Rings & Sweep Beam Canvas Overlay -->
+            <div class="radar-sweep-beam" id="radarSweepBeam" style="z-index: 5; pointer-events: none;"></div>
+            
+            <div class="radar-timestamp-overlay" id="radarTimestamp" style="z-index: 10; position: absolute; bottom: 8px; left: 8px;">
+              Live Doppler Sweep · Max 48 dBZ (Moderate-Heavy)
+            </div>
+          </div>
+
+          <!-- Radar Reflectivity Legend (Official IMD dBZ Scale) -->
+          <div class="radar-legend" style="margin-top: 8px;">
+            <span style="font-weight: 700; color: #94a3b8;">5 dBZ (Drizzle)</span>
+            <div class="legend-gradient"></div>
+            <span style="font-weight: 700; color: #94a3b8;">>55 dBZ (Severe Hail)</span>
+          </div>
+
+          <!-- Layer Controls & Radar Playback -->
+          <div class="radar-layer-strip" style="margin-top: 8px;">
+            <button class="radar-layer-btn active" data-layer="reflectivity"><i class="fa-solid fa-cloud-showers-heavy"></i> Reflectivity</button>
+            <button class="radar-layer-btn active" data-layer="rings"><i class="fa-solid fa-circle-notch"></i> Range Rings</button>
+            <button class="radar-layer-btn active" data-layer="velocity"><i class="fa-solid fa-wind"></i> Wind Vectors</button>
+            <button class="radar-play-btn" id="radarPlayToggle" style="margin-left: auto;"><i class="fa-solid fa-pause"></i> Pause Sweep</button>
+          </div>
+
+          <!-- Educational Explainer: What Radar Does -->
+          <div style="margin-top: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px 12px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; cursor: pointer;" id="radarEduToggle">
+              <span style="font-size: 0.76rem; font-weight: 800; color: #1e3a8a;">
+                <i class="fa-solid fa-circle-question" style="color: #2563eb; margin-right: 4px;"></i>
+                What does Doppler Radar do in Mausam? (SIH Guide)
+              </span>
+              <i class="fa-solid fa-chevron-down" id="radarEduChevron" style="font-size: 0.75rem; color: #64748b; transition: transform 0.2s;"></i>
+            </div>
+            <div id="radarEduBody" style="display: none; margin-top: 8px; font-size: 0.72rem; color: #475569; line-height: 1.45;">
+              <p style="margin-bottom: 6px;">
+                <strong>1. Reflectivity (dBZ):</strong> Measures microwave energy bounced back by precipitation droplets. Green (20–35 dBZ) is light/moderate rain, red/magenta (>45 dBZ) indicates severe squalls or hailstorms.
+              </p>
+              <p style="margin-bottom: 6px;">
+                <strong>2. Doppler Velocity:</strong> Uses frequency shift to detect particle velocity toward/away from the station, revealing wind shear, squalls, and cyclone circulation.
+              </p>
+              <p style="margin-bottom: 6px;">
+                <strong>3. 0–3 Hr Nowcasting:</strong> Numerical weather forecast models take hours to run. Doppler radar scans every 10 mins to catch sudden cloudbursts before they hit.
+              </p>
+              <p>
+                <strong>4. Persona Integration:</strong> Directly powers Commuter waterlogging predictions, Agromet spray-hold warnings, and Playground lightning alerts.
+              </p>
+            </div>
+          </div>
+
         </div>
       </div>
 

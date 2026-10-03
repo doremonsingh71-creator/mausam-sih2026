@@ -1758,6 +1758,35 @@ body {
   text-align: center;
 }
 
+.chat-notice-banner {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #92400e;
+  border-radius: 12px;
+  padding: 8px 12px;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  margin: 6px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: fadeIn 0.25s ease;
+}
+
+.chat-bubble strong {
+  color: inherit;
+  font-weight: 700;
+}
+
+.chat-bubble em {
+  font-style: italic;
+  opacity: 0.9;
+}
+
+.chat-bubble li {
+  line-height: 1.4;
+}
+
 /* ==========================================================================
    MOBILE & RESPONSIVE BREAKPOINTS
    ========================================================================== */
@@ -1782,3 +1811,4 @@ body {
     display: none;
   }
 }
+
